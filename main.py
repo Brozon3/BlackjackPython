@@ -1,25 +1,7 @@
 import sys
 import csv
 import random
-
-
-def load_bank():
-    try:
-        with open("bank.txt") as file:
-            bank = float(file.readline())
-        print(f"\nMoney: ${bank}")
-        if bank < 5:
-            print("You don't have enough money to play. Please add money to your account. Closing program.")
-            sys.exit(1)
-        else:
-            return bank
-    except FileNotFoundError:
-        print("File not found. Closing program.")
-        sys.exit(1)
-    except Exception as e:
-        print("Unknown error occurred. Closing program.")
-        print(type(e), e)
-        sys.exit(1)
+import db
 
 
 def get_wager(bank):
@@ -43,16 +25,6 @@ def get_wager(bank):
             print("Unknown error occurred. Closing program.")
             print(type(e), e)
             sys.exit(1)
-
-
-def save_bank(bank):
-    try:
-        with open("bank.txt", "w") as file:
-            file.write(f"{bank}")
-    except Exception as e:
-        print("Unknown error occurred. Closing program.")
-        print(type(e), e)
-        sys.exit(1)
 
 
 def load_deck():
@@ -95,9 +67,30 @@ def calculate_total(hand):
         total += card[2]
     if total == 21:
         print("Blackjack!")
-    if total >= 21:
+    if total > 21:
         print("Bust!")
     return total
+
+
+def end_of_round(player_total, dealer_total, bank, wager):
+    print(f"\nYOUR POINTS:     {player_total}")
+    print(f"DEALER'S POINTS: {dealer_total}")
+
+    if (player_total <= 21) and (dealer_total > 21):
+        print("\nYou win!")
+        bank += round(1.5 * wager, 2)
+        db.save_bank(bank)
+        print(f"Money: {bank}")
+    elif (player_total > dealer_total) and (player_total < 21) and (dealer_total < 21):
+        print("\nYou win!")
+        bank += round(1.5 * wager, 2)
+        db.save_bank(bank)
+        print(f"Money: {bank}")
+    else:
+        print("\nYou lose!")
+        bank -= wager
+        db.save_bank(bank)
+        print(f"Money: {bank}")
 
 
 def main():
@@ -109,13 +102,12 @@ def main():
 
     while choice.lower() == "y":
 
-        bank = load_bank()
+        bank = db.load_bank()
         wager = get_wager(bank)
         deck = load_deck()
         dealer_hand = []
         dealer_total = 0
         player_hand = []
-        choice = ""
 
         print("\nDealer is shuffling ...")
         random.shuffle(deck)
@@ -146,19 +138,7 @@ def main():
             print_hand(dealer_hand)
             dealer_total = calculate_total(dealer_hand)
 
-        print(f"\nYOUR POINTS:     {player_total}")
-        print(f"DEALER'S POINTS: {dealer_total}")
-
-        if player_total > dealer_total:
-            print("\nYou win!")
-            bank += 1.5 * wager
-            save_bank(bank)
-            print(f"Money: {bank}")
-        else:
-            print("\nYou lose!")
-            bank -= wager
-            save_bank(bank)
-            print(f"Money: {bank}")
+        end_of_round(player_total, dealer_total, bank, wager)
 
         choice = input("\nPlay again? (y/n) ")
 
