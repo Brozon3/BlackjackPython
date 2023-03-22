@@ -1,5 +1,6 @@
 import sys
 import csv
+import random
 
 
 def load_bank():
@@ -59,6 +60,22 @@ def load_deck():
         sys.exit(1)
 
 
+def deal(hand, deck):
+    try:
+        number = random.randint(0, len(deck) - 1)
+        card = deck.pop(number)
+        hand.append(card)
+    except Exception as e:
+        print("Unknown error occurred. Closing program.")
+        print(type(e), e)
+        sys.exit(1)
+
+
+def print_hand(hand):
+    for card in hand:
+        print(f"{card[0]} of {card[1]}")
+
+
 def main():
 
     print("BLACKJACK!")
@@ -66,9 +83,30 @@ def main():
 
     bank = load_bank()
     deck = load_deck()
+    dealer_hand = []
+    dealer_total = 0
+    player_hand = []
+    player_total = 0
+    choice = ""
 
-    print(f"{bank}")
-    print(f"{deck}")
+    print("\nDealer is shuffling ...")
+    random.shuffle(deck)
+
+    print("\nDEALER'S SHOW CARD")
+    deal(dealer_hand, deck)
+    print_hand(dealer_hand)
+
+    print("\nYOUR CARDS:")
+    deal(player_hand, deck)
+    deal(player_hand, deck)
+    print_hand(player_hand)
+
+    choice = input("\nHit or stand? ")
+
+    if choice.lower() == "hit":
+        deal(player_hand, deck)
+        print_hand(player_hand)
+
 
 
 if __name__ == '__main__':
