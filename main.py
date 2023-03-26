@@ -47,9 +47,18 @@ def load_deck():
 
 def deal(hand, deck):
     try:
-        number = random.randint(0, len(deck) - 1)
-        card = deck.pop(number)
+        card = deck.pop(random.randint(0, len(deck) - 1))
+        total = calculate_total(hand)
+        if (card[2] == 11) and (total + 11 > 21):
+            card[2] = 1
+        elif (card[2] == 11) and (total + 11 < 21):
+            high_or_low = input("Do you want your ace to be high or low?")
+            if high_or_low.lower() == "high":
+                card[2] = 11
+            else:
+                card[2] = 1
         hand.append(card)
+        return hand
     except Exception as e:
         print("Unknown error occurred. Closing program.")
         print(type(e), e)
@@ -65,10 +74,12 @@ def calculate_total(hand):
     total = 0
     for card in hand:
         total += card[2]
-    if total == 21:
+    if total == 21 and (len(hand) == 2):
         print("Blackjack!")
-    if total > 21:
+    elif total > 21:
         print("Bust!")
+    elif total == 21:
+        print("21!")
     return total
 
 

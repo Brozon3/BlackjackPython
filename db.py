@@ -40,7 +40,7 @@ def deposit_money(bank):
                     continue
                 bank += deposit
                 save_bank(bank)
-                print(f"Money: ${bank}")
+                print(f"\nMoney: ${bank}")
                 return bank
             else:
                 print("Once you had added more funds to your account you can come back and play.")
