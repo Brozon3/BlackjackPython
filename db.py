@@ -3,7 +3,7 @@ import sys
 
 def load_bank():
     try:
-        with open("bank.txt") as file:
+        with open("money.txt") as file:
             bank = float(file.readline())
         print(f"\nMoney: ${bank}")
         while bank < 5:
@@ -21,7 +21,7 @@ def load_bank():
 
 def save_bank(bank):
     try:
-        with open("bank.txt", "w") as file:
+        with open("money.txt", "w") as file:
             file.write(f"{bank}")
     except Exception as e:
         print("Unknown error occurred. Closing program.")
