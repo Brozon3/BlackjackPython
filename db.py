@@ -1,14 +1,13 @@
 import sys
 
 
-def load_bank():
+def loadBank():
     try:
         with open("money.txt") as file:
             bank = float(file.readline())
-        print(f"\nMoney: ${bank}")
         while bank < 5:
             print("\nYou don't have enough money in your account to play.")
-            bank = deposit_money(bank)
+            bank = depositMoney(bank)
         return bank
     except FileNotFoundError:
         print("File not found. Closing program.")
@@ -19,7 +18,7 @@ def load_bank():
         sys.exit(1)
 
 
-def save_bank(bank):
+def saveBank(bank):
     try:
         with open("money.txt", "w") as file:
             file.write(f"{bank}")
@@ -29,7 +28,7 @@ def save_bank(bank):
         sys.exit(1)
 
 
-def deposit_money(bank):
+def depositMoney(bank):
     while True:
         try:
             choice = input("\nWould you like to add more money to your account? (y/n) ")
@@ -39,7 +38,7 @@ def deposit_money(bank):
                     print("Deposit amount must be greater than 0.")
                     continue
                 bank += deposit
-                save_bank(bank)
+                saveBank(bank)
                 print(f"\nMoney: ${bank}")
                 return bank
             else:
@@ -47,6 +46,30 @@ def deposit_money(bank):
                 sys.exit(1)
         except ValueError:
             print("Please enter a valid number.")
+        except Exception as e:
+            print("Unknown error occurred. Closing program.")
+            print(type(e), e)
+            sys.exit(1)
+
+
+def getWager(bank):
+    while True:
+        try:
+            wager = float(input("Bet amount: "))
+            if wager < 5:
+                print("Bet amount must be greater than $5.")
+                continue
+            elif wager > 1000:
+                print("Bet amount must be lower than $1000.")
+                continue
+            elif wager > bank:
+                print("Bet amount must be lower than your total amount of money.")
+                continue
+            else:
+                return wager
+        except ValueError:
+            print("Please enter a valid number.")
+            continue
         except Exception as e:
             print("Unknown error occurred. Closing program.")
             print(type(e), e)
