@@ -2,16 +2,17 @@ import sys
 
 
 def loadBank():
+    bank = 10.00
     try:
         with open("money.txt") as file:
             bank = float(file.readline())
         while bank < 5:
             print("\nYou don't have enough money in your account to play.")
             bank = depositMoney(bank)
-        return bank
+        return round(bank, 2)
     except FileNotFoundError:
-        print("File not found. Closing program.")
-        sys.exit(1)
+        print(f"Couldn't find {file}. Your account will start with a balance of ${bank}.")
+        return bank
     except Exception as e:
         print("Unknown error occurred. Closing program.")
         print(type(e), e)
@@ -21,7 +22,7 @@ def loadBank():
 def saveBank(bank):
     try:
         with open("money.txt", "w") as file:
-            file.write(f"{bank}")
+            file.write(f"{round(bank, 2)}")
     except Exception as e:
         print("Unknown error occurred. Closing program.")
         print(type(e), e)
@@ -39,7 +40,7 @@ def depositMoney(bank):
                     continue
                 bank += deposit
                 saveBank(bank)
-                print(f"\nMoney: ${bank}")
+                print(f"\nMoney: ${round(bank, 2)}")
                 return bank
             else:
                 print("Once you had added more funds to your account you can come back and play.")

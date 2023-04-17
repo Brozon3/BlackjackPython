@@ -5,7 +5,7 @@ import db
 
 def loadDeck():
     deck = []
-    suits = ["\u2665", "\u2660", "\u2666", "\u2663"]
+    suits = ["\u2665", "\u2660", "\u2666", "\u2663"]  # Unicode for suits in a deck of cards
 
     # Adding cards 2 to 10 to the deck
     for i in range(2, 11):
@@ -32,11 +32,27 @@ def loadDeck():
     return deck
 
 
-def deal(hand, deck):
+def dealPlayer(playerHand, deck):
     try:
         card = deck.pop(0)
-        hand.append(card)
-        return hand
+        playerTotal = calculatePlayerTotal(playerHand)
+        if card[0] == "A" and playerTotal + 11 < 21:
+            choice = input("\nYou drew an Ace, do you want it to be high or low? ")
+            if choice.lower() == "low":
+                card = [card[0], card[1], 1]
+        elif card[0] == "A" and playerTotal + 11 > 21:
+            card = [card[0], card[1], 1]
+        playerHand.append(card)
+    except Exception as e:
+        print("Unknown error occurred. Closing program.")
+        print(type(e), e)
+        sys.exit(1)
+
+
+def dealDealer(dealerHand, deck):
+    try:
+        card = deck.pop(0)
+        dealerHand.append(card)
     except Exception as e:
         print("Unknown error occurred. Closing program.")
         print(type(e), e)
@@ -45,26 +61,15 @@ def deal(hand, deck):
 
 def printHand(hand):
     for card in hand:
-        print(f"{card[0]}{card[1]}\t", end="")
+        print(f"{card[0]}{card[1]}  ", end="")
 
 
-def calculateTotal(hand):
+def calculatePlayerTotal(hand):
     total = 0
 
-    # Giving the user the option for aces to be high or low
     for card in hand:
-        if card[2] == 11 and total + 11 < 21:
-            choice = input("\nDo you want your ace to be high or low? ")
-            if choice.lower() == 'high':
-                total += 11
-            elif choice.lower() == 'low':
-                total += 1
-        elif card[2] == 11 and total + 11 > 21:
-            total += 1
-        else:
-            total += card[2]
+        total += card[2]
 
-    # Printing outcomes
     if total == 21 and (len(hand) == 2):
         print("Blackjack!!!")
     elif total > 21:
@@ -84,7 +89,7 @@ def calculateDealerTotal(hand):
     # Ensuring aces are calculated properly for the dealer
     if total > 21:
         for card in hand:
-            if card[2] == 11 and total - 10 <= 21:
+            if card[0] == 'A' and total - 10 <= 21:
                 total -= 10
 
     # Printing outcomes
@@ -107,17 +112,17 @@ def roundEnd(playerTotal, dealerTotal, bank, wager):
         print("\nYou win!")
         bank += round(1.5 * wager, 2)
         db.saveBank(bank)
-        print(f"Money: ${bank}")
+        return round(bank, 2)
     elif (playerTotal > dealerTotal) and (playerTotal <= 21):
         print("\nYou win!")
         bank += round(1.5 * wager, 2)
         db.saveBank(bank)
-        print(f"Money: ${bank}")
+        return round(bank, 2)
     else:
         print("\nSorry. You lose.")
         bank -= wager
         db.saveBank(bank)
-        print(f"Money: ${bank}")
+        return round(bank, 2)
 
 
 def main():
@@ -131,12 +136,15 @@ def main():
     random.shuffle(deck)
 
     bank = db.loadBank()
-    print(f"\nMoney: ${bank}")
+    print(f"\nMoney: ${round(bank, 2)}")
 
     while choice.lower() == "y":
 
         dealerHand = []
         playerHand = []
+
+        if bank < 5:
+            db.depositMoney(bank)
 
         # Check to see if the deck needs to be reshuffled
         if len(deck) < 10:
@@ -147,25 +155,30 @@ def main():
         wager = db.getWager(bank)
 
         print("\nDEALER'S SHOW CARD:")
-        deal(dealerHand, deck)
+        dealDealer(dealerHand, deck)
         printHand(dealerHand)
 
         # Player gets two cards face up and dealer gets a face down card
-        print("\n\nYOUR CARDS:")
-        deal(playerHand, deck)
-        deal(dealerHand, deck)
-        deal(playerHand, deck)
+        print("\n\nYOUR FIRST CARD:")
+        dealPlayer(playerHand, deck)
         printHand(playerHand)
-        playerTotal = calculateTotal(playerHand)
+
+        print("\n\nDEALER GETS SECOND CARD AND ITS FACE DOWN..")
+        dealDealer(dealerHand, deck)
+
+        print("\nYOUR CARDS:")
+        dealPlayer(playerHand, deck)
+        printHand(playerHand)
+        playerTotal = calculatePlayerTotal(playerHand)
 
         # Player's turn
         while playerTotal < 21:
             choice = input("\n\nHit or stand? (hit/stand): ")
             if choice.lower() == "hit":
-                deal(playerHand, deck)
+                dealPlayer(playerHand, deck)
                 print("\nYOUR CARDS:")
                 printHand(playerHand)
-                playerTotal = calculateTotal(playerHand)
+                playerTotal = calculatePlayerTotal(playerHand)
             if choice.lower() == "stand":
                 break
 
@@ -177,12 +190,13 @@ def main():
         if playerTotal <= 21:
             while dealerTotal < 17 and dealerTotal < playerTotal:
                 print("\n\nDEALER'S CARDS:")
-                deal(dealerHand, deck)
+                dealDealer(dealerHand, deck)
                 printHand(dealerHand)
                 dealerTotal = calculateDealerTotal(dealerHand)
 
         # End of round
-        roundEnd(playerTotal, dealerTotal, bank, wager)
+        bank = roundEnd(playerTotal, dealerTotal, bank, wager)
+        print(f"Money: ${bank}")
 
         choice = input("\nPlay again? (y/n) ")
 
